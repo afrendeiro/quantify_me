@@ -19,21 +19,17 @@ params2 = ["steps", "distance", "floors", "active-minutes", "calories-burned", "
 
 cookie = login(email="afrendeiro@gmail.com", password="")
 
-# fitbit = pd.DataFrame()
-# for param in params:
-#     df = com.convert_robj(
-#         get_daily_data(cookie, what=param, start_date="2015-01-01", end_date="2016-08-20"))[param]
-#     fitbit = pd.concat([fitbit, df], axis=1)
-
 fitbit = pd.DataFrame()
-for param in params2:
+for param in params2[3:]:
     for date in pd.date_range(start="2015-01-01", end="2016-08-20"):
         print(param, date)
         df = pd.DataFrame(
             com.convert_robj(
                 get_intraday_data(cookie, what=param, date=str(date.date())))[param])
         df.index = date + pd.timedelta_range(start="00:00:00", periods=4 * 24, freq="15Min")
-    df["param"] = param
-    fitbit = fitbit.append(df)
+        df["param"] = param
+        df.columns = ["value", "param"]
+        fitbit = fitbit.append(df)
+
 
 fitbit.to_csv("data/fitbit.csv", index=True)
