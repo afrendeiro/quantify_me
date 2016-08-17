@@ -43,7 +43,7 @@ for i, start in enumerate(starts):
             n["timestamp"] = s["Id"]
             noise = noise.append(n)
 
-sleep.to_csv("data/sleep.csv", index=False)
+sleep.to_csv("data/sleep_summary.csv", index=False)
 activity.to_csv("data/sleep_activity.csv", index=True)
 events.to_csv("data/sleep_events.csv", index=False)
 noise.to_csv("data/sleep_noise.csv", index=False)
