@@ -1,0 +1,9 @@
+*.svg
+*.pdf
+*.png
+# sorry, these have sensitive info
+data/git_log.csv
+data/git_log.filtered.csv
+# sorry, this has personal info
+data/phone_log.csv
+
