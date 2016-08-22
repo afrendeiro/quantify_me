@@ -56,7 +56,7 @@ pivot.resample("1D", how="mean")
 
 
 # limit to start date
-pivot = pivot[pivot.index > "2014-09-15"]
+pivot = pivot[pivot.index > pd.to_datetime("2014-09-15")]
 
 # heatmap
 df = pivot.T.sort_values(by=pivot.T.columns.tolist(), ascending=False)
@@ -94,8 +94,8 @@ fig.savefig("lineplot.total.svg", bbox_inches="tight")
 
 
 # with cumsum
-fig, axis = plt.subplots(1)
-pivot.sum(1).cumsum().plot(kind="line", ax=axis)
+fig, axis = plt.subplots(1, figsize=(6, 1.5))
+pivot.sum(1).cumsum().plot(kind="line", ax=axis, linewidth=4)
 fig.savefig("lineplot.total.cumsum.svg", bbox_inches="tight")
 
 
