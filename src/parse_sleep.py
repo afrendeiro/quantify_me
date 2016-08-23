@@ -1,6 +1,6 @@
 import pandas as pd
 
-with open("data/sleep-export.csv", "r") as handle:
+with open("data/raw/sleep-export.csv", "r") as handle:
     data = handle.read()
 
 starts = list()

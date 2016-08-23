@@ -71,3 +71,29 @@ for repo in os.listdir(root_dir):
     output = output.append(parsed)
 
 output.to_csv(output_file, index=False)
+
+
+# Filter
+# chose which file types to exclude
+file_types = [
+    "py", "R", "sh", "Makefile",
+    "ipynb", "md", "yaml", "yml"]
+
+output = output[output["file_name"].str.contains("|".join(["\." + x + "$" for x in file_types]))]
+
+# chose which authors to keep
+authors = ["rendeiro"]
+output = output[output["author"].str.contains("|".join(authors))]
+
+# keep only repos with more than X commits
+min_commits = 2
+counts = output.groupby("repository")['hash'].count()
+output = output[output["repository"].isin(counts[counts > min_commits].index)]
+
+output.to_csv("data/git_log.filtered.csv", index=False)
+
+
+# anonymize repositories
+mapping = dict(zip(output['repository'].unique(), range(len(output['repository'].unique()))))
+output['repository'] = ["repo" + str(mapping[x]) for x in output['repository']]
+output.to_csv("data/git_log.filtered.anonymized.csv", index=False)

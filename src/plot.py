@@ -3,63 +3,42 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set_style("white")
 
+pd.set_option("date_dayfirst", True)
 
 # Git
 
-
 # Read in git data
-output = pd.read_csv("data/git_log.csv")
-
-
-# Filter
-# chose which file types to exclude
-file_types = [
-    "py", "R", "sh", "Makefile",
-    "ipynb", "md", "yaml", "yml"]
-
-output = output[output["file_name"].str.contains("|".join(["\." + x + "$" for x in file_types]))]
-
-# chose which authors to keep
-authors = ["rendeiro"]
-output = output[output["author"].str.contains("|".join(authors))]
-
-# keep only repos with more than X commits
-min_commits = 2
-counts = output.groupby("repository")['hash'].count()
-output = output[output["repository"].isin(counts[counts > min_commits].index)]
-
-output.to_csv("data/git_log.filtered.csv", index=False)
-
+git = pd.read_csv("data/git_log.filtered.anonymized.csv")
 
 # Work with the data
-output["change"] = output["change"].astype(pd.np.int64)
-output["date"] = pd.to_datetime(output["date"])
-output["time"] = pd.to_datetime(output["date"]).dt.time
-output["day"] = pd.to_datetime(output["date"]).dt.date
+git["change"] = git["change"].astype(pd.np.int64)
+git["date"] = pd.to_datetime(git["date"])
+git["time"] = pd.to_datetime(git["date"]).dt.time
+git["day"] = pd.to_datetime(git["date"]).dt.date
 
 
-pivot = pd.pivot_table(output, index="day", columns="repository", aggfunc=sum)
-pivot.columns = pivot.columns.droplevel(0)
-pivot.index = pivot.index.to_datetime()
+git_pivot = pd.pivot_table(git, index="day", columns="repository", aggfunc=sum)
+git_pivot.columns = git_pivot.columns.droplevel(0)
+git_pivot.index = git_pivot.index.to_datetime()
 
 
 # plot
-pivot.plot(kind="line")
-pivot.plot(kind="bar")
+git_pivot.plot(kind="line")
+git_pivot.plot(kind="bar")
 
 
 # fill with previous entry
-pivot.asfreq(pd.DateOffset(), method="pad")
+git_pivot.asfreq(pd.DateOffset(), method="pad")
 
 # resample
-pivot.resample("1D", how="mean")
+git_pivot.resample("1D", how="mean")
 
 
 # limit to start date
-pivot = pivot[pivot.index > pd.to_datetime("2014-09-15")]
+git_pivot = git_pivot[git_pivot.index > pd.to_datetime("2014-09-15")]
 
 # heatmap
-df = pivot.T.sort_values(by=pivot.T.columns.tolist(), ascending=False)
+df = git_pivot.T.sort_values(by=git_pivot.T.columns.tolist(), ascending=False)
 
 g = sns.clustermap(pd.np.log2(1 + df.fillna(0)), col_cluster=False, row_cluster=False, robust=True)
 for i, tick in enumerate(g.ax_heatmap.yaxis.get_majorticklabels()):
@@ -74,20 +53,20 @@ g.fig.savefig("clustermap.resampled.sorted.svg", bbox_inches="tight")
 
 # line plot on top
 fig, axis = plt.subplots(2, 2)
-pivot.plot(kind="line", ax=axis[0][0])
-pd.np.log2(pivot).plot(kind="line", ax=axis[0][1])
-pivot.plot(kind="bar", ax=axis[1][0])
-pd.np.log2(pivot).plot(kind="bar", ax=axis[1][1])
+git_pivot.plot(kind="line", ax=axis[0][0])
+pd.np.log2(git_pivot).plot(kind="line", ax=axis[0][1])
+git_pivot.plot(kind="bar", ax=axis[1][0])
+pd.np.log2(git_pivot).plot(kind="bar", ax=axis[1][1])
 for ax in axis.flatten():
     ax.set_xticklabels([])
 fig.savefig("lineplot.svg", bbox_inches="tight")
 
 # with total too
 fig, axis = plt.subplots(2, 2)
-pivot.sum(1).plot(kind="line", ax=axis[0][0])
-pd.np.log2(pivot.sum(1)).plot(kind="line", ax=axis[0][1])
-pivot.sum(1).plot(kind="bar", ax=axis[1][0])
-pd.np.log2(pivot.sum(1)).plot(kind="bar", ax=axis[1][1])
+git_pivot.sum(1).plot(kind="line", ax=axis[0][0])
+pd.np.log2(git_pivot.sum(1)).plot(kind="line", ax=axis[0][1])
+git_pivot.sum(1).plot(kind="bar", ax=axis[1][0])
+pd.np.log2(git_pivot.sum(1)).plot(kind="bar", ax=axis[1][1])
 for ax in axis.flatten():
     ax.set_xticklabels([])
 fig.savefig("lineplot.total.svg", bbox_inches="tight")
@@ -95,7 +74,7 @@ fig.savefig("lineplot.total.svg", bbox_inches="tight")
 
 # with cumsum
 fig, axis = plt.subplots(1, figsize=(6, 1.5))
-pivot.sum(1).cumsum().plot(kind="line", ax=axis, linewidth=4)
+git_pivot.sum(1).cumsum().plot(kind="line", ax=axis, linewidth=4)
 fig.savefig("lineplot.total.cumsum.svg", bbox_inches="tight")
 
 
@@ -118,3 +97,49 @@ fig, axis = plt.subplots(1)
 axis.set_ylabel("Time per day (hours)")
 sns.despine(fig)
 fig.savefig("work.timeline.svg", bbox_inches="tight")
+
+
+# Fitbit
+
+fitbit = pd.read_csv("data/fitbit.csv")
+fitbit = pd.pivot_table(fitbit, index="Unnamed: 0", columns="param")
+fitbit.columns = fitbit.columns.droplevel(0)
+fitbit.index = fitbit.index.to_datetime()
+
+
+fig, axis = plt.subplots(1)
+fitbit.plot(ax=axis)
+axis.set_ylabel("Steps per 15 minutes")
+sns.despine(fig)
+fig.savefig("fitbit.timeline.svg", bbox_inches="tight")
+
+
+# sleep
+
+sleep = pd.read_csv("data/sleep_summary.csv")
+sleep["From"] = pd.to_datetime(sleep["From"], dayfirst=True)
+sleep["To"] = pd.to_datetime(sleep["To"], dayfirst=True)
+sleep["Sched"] = pd.to_datetime(sleep["Sched"], dayfirst=True)
+
+for i in sleep.index:
+    sleep.loc[i, "date_range"] = pd.date_range(start=sleep["From"].ix[i], end=sleep["To"].ix[i])
+
+
+# website
+
+web = pd.read_csv("data/website_analytics.csv", index_col=0)
+web.index = web.index.to_datetime()
+
+
+# twitter
+twitter = pd.read_csv("data/twiter_metrics.csv").set_index("time")
+twitter.index = twitter.index.to_datetime()
+
+
+fig, axis = plt.subplots(1)
+twitter.drop(['Tweet id', 'Tweet permalink', 'Tweet text'], axis=1).plot(ax=axis)
+
+twitter_resampled = twitter.drop(['Tweet id'], axis=1).groupby(pd.TimeGrouper('D')).transform(sum).resample('D').head(-1)  # , how='ohlc')
+twitter_resampled["count_per_day"] = twitter.groupby(pd.TimeGrouper('D'))["Tweet id"].count().resample('D').head(-1)
+
+twitter_resampled['count_per_day'].plot()
