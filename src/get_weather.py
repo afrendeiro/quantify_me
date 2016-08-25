@@ -44,4 +44,4 @@ for i, forecast in enumerate(forecasts):
         weather.append(ids + d + h)
 
 weather = pd.DataFrame(weather, columns=['record', 'timezone', 'latitude', 'longitude'] + daily_attrs + hourly_attrs)
-weather.to_csv("data/weather.csv")
+weather.to_csv("data/weather.csv", index=False)
