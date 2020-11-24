@@ -1,0 +1,5 @@
+pandas
+matplotlib
+fitbit
+oauthlib
+CherryPy
